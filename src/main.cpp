@@ -1,127 +1,106 @@
-#include <WiFi.h>
 #include <Arduino.h>
+#include <WiFi.h>
 #include <PubSubClient.h>
 
-// ===== WIFI =====
+// WIFI
 const char* ssid = "iot";
 const char* password = "iotsenai502";
 
-// ===== MQTT =====
+// MQTT
 const char* mqtt_server = "192.168.0.4";
 const int mqtt_port = 1883;
 
-// ===== LED =====
-#define LED 27
+// LED
+#define LED_PIN 4
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-// ===== FUNÇÃO QUANDO CHEGAR MENSAGEM =====
-void callback(char* topic, byte* payload, unsigned int length) {
+void callback(char* topic, byte* payload, unsigned int length)
+{
+    String mensagem = "";
 
-  Serial.print("Mensagem recebida no tópico: ");
-  Serial.println(topic);
-
-  String mensagem = "";
-
-  for (int i = 0; i < length; i++) {
-    mensagem += (char)payload[i];
-  }
-
-  Serial.print("Mensagem: ");
-  Serial.println(mensagem);
-
-  // ===== CONTROLE DO LED =====
-
-  if (mensagem == "ON") {
-
-    digitalWrite(LED, HIGH);
-
-    Serial.println("LED LIGADO");
-  }
-
-  if (mensagem == "OFF") {
-
-    digitalWrite(LED, LOW);
-
-    Serial.println("LED DESLIGADO");
-  }
-}
-
-// ===== CONECTAR WIFI =====
-void setup_wifi() {
-
-  delay(10);
-
-  Serial.println();
-  Serial.print("Conectando no WiFi: ");
-  Serial.println(ssid);
-
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED) {
-
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi conectado!");
-
-  Serial.print("IP da ESP32: ");
-  Serial.println(WiFi.localIP());
-}
-
-// ===== RECONECTAR MQTT =====
-void reconnect() {
-
-  while (!client.connected()) {
-
-    Serial.print("Conectando ao MQTT...");
-
-    String clientId = "ESP32Client-";
-    clientId += String(random(0xffff), HEX);
-
-    if (client.connect(clientId.c_str())) {
-
-      Serial.println(" conectado!");
-
-      // ===== TÓPICO =====
-      client.subscribe("Aula");
-
-    } else {
-
-      Serial.print(" falhou, rc=");
-      Serial.print(client.state());
-
-      Serial.println(" tentando novamente em 5 segundos");
-
-      delay(5000);
+    for (unsigned int i = 0; i < length; i++)
+    {
+        mensagem += (char)payload[i];
     }
-  }
+
+    Serial.print("Mensagem recebida: ");
+    Serial.println(mensagem);
+
+    if (mensagem == "ON")
+    {
+        digitalWrite(LED_PIN, HIGH);
+    }
+
+    if (mensagem == "OFF")
+    {
+        digitalWrite(LED_PIN, LOW);
+    }
 }
 
-// ===== SETUP =====
-void setup() {
+void conectarWifi()
+{
+    Serial.print("Conectando ao WiFi");
 
-  Serial.begin(115200);
+    WiFi.begin(ssid, password);
 
-  pinMode(LED, OUTPUT);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+    }
 
-  setup_wifi();
+    Serial.println();
+    Serial.println("WiFi conectado");
 
-  client.setServer(mqtt_server, mqtt_port);
-
-  client.setCallback(callback);
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
 }
 
-// ===== LOOP =====
-void loop() {
+void conectarMQTT()
+{
+    while (!client.connected())
+    {
+        Serial.println("Conectando MQTT...");
 
-  if (!client.connected()) {
+        String clientId = "ESP32-";
+        clientId += String(random(0xffff), HEX);
 
-    reconnect();
-  }
+        if (client.connect(clientId.c_str()))
+        {
+            Serial.println("MQTT conectado");
 
-  client.loop();
+            client.subscribe("Aula");
+        }
+        else
+        {
+            Serial.print("Erro MQTT: ");
+            Serial.println(client.state());
+
+            delay(3000);
+        }
+    }
+}
+
+void setup()
+{
+    Serial.begin(115200);
+
+    pinMode(LED_PIN, OUTPUT);
+
+    conectarWifi();
+
+    client.setServer(mqtt_server, mqtt_port);
+    client.setCallback(callback);
+}
+
+void loop()
+{
+    if (!client.connected())
+    {
+        conectarMQTT();
+    }
+
+    client.loop();
 }

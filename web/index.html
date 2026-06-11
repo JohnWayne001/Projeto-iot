@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle LED</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Controle do LED</h1>
+
+    <button onclick="ligar()">LIGAR</button>
+    <button onclick="desligar()">DESLIGAR</button>
+</div>
+<div class="container">
+    <h1>Controle do GP3</h1>
+    <button onclick="ligar_gp3()">LIGAR ESP - GP3</button>
+    <button onclick="desligar_gp3()">DESLIGAR ESP - GP3</button>
+</div>
+
+<script>
+function ligar() {
+    fetch("/ligar", { method: "POST" });
+}
+
+function desligar() {
+    fetch("/desligar", { method: "POST" });
+}
+
+function ligar_gp3() {
+    fetch("/ligar_gp3", { method: "POST" });
+}
+
+function desligar_gp3() {
+    fetch("/desligar_gp3", { method: "POST" });
+}
+</script>
+
+</body>
+</html>
